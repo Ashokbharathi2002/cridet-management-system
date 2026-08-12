@@ -77,10 +77,27 @@ AUTH_USER_MODEL = 'core.User'
 
 
 # Database Configuration
-# Default is SQLite for zero-config execution. Toggle to MySQL by setting USE_MYSQL = True
-USE_MYSQL = False
+import os, shutil
 
-if USE_MYSQL:
+USE_MYSQL = False
+IS_VERCEL = bool(os.environ.get('VERCEL'))
+
+if IS_VERCEL:
+    tmp_db = '/tmp/db.sqlite3'
+    orig_db = BASE_DIR / 'db.sqlite3'
+    if not os.path.exists(tmp_db) and os.path.exists(orig_db):
+        try:
+            shutil.copyfile(orig_db, tmp_db)
+        except Exception:
+            pass
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': tmp_db,
+        }
+    }
+elif USE_MYSQL:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
