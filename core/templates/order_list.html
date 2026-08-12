@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Orders - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-cart-check text-primary me-2"></i>Orders Register</h3>
+        <p class="text-muted mb-0">Track field orders, delivery progress, and digital signature verifications.</p>
+    </div>
+    <div>
+        <a href="{% url 'order_create' %}" class="btn btn-primary shadow-sm"><i class="bi bi-cart-plus me-1"></i> Place New Order</a>
+    </div>
+</div>
+
+<!-- Search & Status Filter -->
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Search by order ID, retailer name...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="status" class="form-select">
+                    <option value="">-- Filter by Status --</option>
+                    <option value="placed" {% if status_filter == 'placed' %}selected{% endif %}>Placed</option>
+                    <option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>Processing</option>
+                    <option value="delivered" {% if status_filter == 'delivered' %}selected{% endif %}>Delivered</option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-secondary w-100">Filter</button>
+                <a href="{% url 'order_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Orders Table -->
+<div class="card shadow-sm border-0 rounded-3">
+    <div class="table-responsive">
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Retailer Shop</th>
+                    <th>Taken By Staff</th>
+                    <th>Total Value</th>
+                    <th>Status</th>
+                    <th>Order Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in orders %}
+                <tr>
+                    <td class="fw-bold">#{{ o.id }}</td>
+                    <td class="fw-semibold text-dark">{{ o.retailer.shop_name }}</td>
+                    <td>{% if o.taken_by_staff %}{{ o.taken_by_staff.display_name }}{% else %}Direct Retailer Order{% endif %}</td>
+                    <td class="fw-bold text-primary">₹{{ o.total_amount }}</td>
+                    <td>
+                        {% if o.status == 'delivered' %}
+                            <span class="badge bg-success px-3 py-1"><i class="bi bi-check-circle me-1"></i>Delivered</span>
+                        {% elif o.status == 'processing' %}
+                            <span class="badge bg-info px-3 py-1"><i class="bi bi-gear me-1"></i>Processing</span>
+                        {% elif o.status == 'placed' %}
+                            <span class="badge bg-warning text-dark px-3 py-1"><i class="bi bi-clock me-1"></i>Placed</span>
+                        {% else %}
+                            <span class="badge bg-secondary px-3 py-1">Cancelled</span>
+                        {% endif %}
+                    </td>
+                    <td class="small text-muted">{{ o.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'order_detail' o.pk %}" class="btn btn-outline-primary py-1 px-2"><i class="bi bi-eye"></i> View</a>
+                            {% if o.status != 'delivered' and o.status != 'cancelled' %}
+                                {% if not user.is_retailer_role %}
+                                <a href="{% url 'deliver_order' o.pk %}" class="btn btn-success py-1 px-2"><i class="bi bi-truck me-1"></i> Deliver</a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">No orders found matching your query.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

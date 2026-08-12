@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Place Order - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-cart-plus-fill text-primary me-2"></i>Place New Wholesale Order</h5>
+                <small class="text-muted">Select catalog items and enter order quantities.</small>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if not user.is_retailer_role %}
+                    <div class="mb-4 col-md-6">
+                        <label for="retailer_id" class="form-label text-secondary small fw-semibold">Select Retailer Shop</label>
+                        <select name="retailer_id" id="retailer_id" class="form-select" required>
+                            <option value="">-- Choose Retailer --</option>
+                            {% for r in retailers %}
+                            <option value="{{ r.id }}">{{ r.shop_name }} ({{ r.shop_number }}) - Credit Bal: ₹{{ r.credit_balance }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <h6 class="fw-bold mb-3">Inventory Catalog</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table custom-table border align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Description</th>
+                                    <th>Unit Price</th>
+                                    <th>Available Stock</th>
+                                    <th style="width: 140px;">Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td class="fw-bold text-dark">{{ item.name }}</td>
+                                    <td class="small text-muted">{{ item.description|default:"-" }}</td>
+                                    <td class="fw-bold text-primary">₹{{ item.price }}</td>
+                                    <td><span class="badge bg-light text-dark border">{{ item.stock_quantity }} units</span></td>
+                                    <td>
+                                        <input type="number" name="quantity_{{ item.id }}" min="0" max="{{ item.stock_quantity }}" value="0" class="form-control text-center">
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No items currently available in inventory stock.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'order_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary fw-bold px-4"><i class="bi bi-cart-check-fill me-1"></i> Submit Order</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

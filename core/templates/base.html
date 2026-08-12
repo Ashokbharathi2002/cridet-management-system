@@ -1,0 +1,193 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AB Traders - Credit Management System{% endblock %}</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <div id="wrapper">
+        {% if user.is_authenticated %}
+        <!-- Sidebar Navigation Drawer -->
+        <aside id="sidebar-wrapper" class="sidebar-sticky">
+            <div class="sidebar-heading d-flex align-items-center justify-content-between">
+                <a href="{% url 'dashboard' %}" class="text-white text-decoration-none d-flex align-items-center">
+                    <i class="bi bi-box-seam-fill me-2 text-info fs-4"></i>
+                    <span>AB <strong>TRADERS</strong></span>
+                </a>
+                <button class="btn btn-sm text-white d-lg-none p-1" id="sidebarCloseBtn" onclick="closeSidebarMenu(event)" aria-label="Close sidebar"><i class="bi bi-x-lg fs-5"></i></button>
+            </div>
+            
+            <div class="list-group list-group-sidebar">
+                <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+
+                {% if user.is_superuser_role or user.is_owner_role %}
+                <div class="sidebar-section-title">Management</div>
+                <a href="{% url 'user_list' %}" class="sidebar-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-people-fill"></i> Users & Roles
+                </a>
+                <a href="{% url 'inventory_list' %}" class="sidebar-link {% if 'inventory' in request.resolver_match.url_name or 'item' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i> Inventory Stock
+                </a>
+                <a href="{% url 'owner_analytics' %}" class="sidebar-link {% if request.resolver_match.url_name == 'owner_analytics' %}active{% endif %}">
+                    <i class="bi bi-graph-up-arrow"></i> Financial Analytics
+                </a>
+                {% endif %}
+
+                {% if user.is_superuser_role or user.is_owner_role or user.is_staff_role %}
+                <div class="sidebar-section-title">Field Operations</div>
+                <a href="{% url 'onboard_retailer' %}" class="sidebar-link {% if request.resolver_match.url_name == 'onboard_retailer' %}active{% endif %}">
+                    <i class="bi bi-shop-window"></i> Onboard Retailer
+                </a>
+                <a href="{% url 'log_collection' %}" class="sidebar-link {% if request.resolver_match.url_name == 'log_collection' %}active{% endif %}">
+                    <i class="bi bi-cash-stack"></i> Log Collection
+                </a>
+                <a href="{% url 'credit_balances' %}" class="sidebar-link {% if request.resolver_match.url_name == 'credit_balances' %}active{% endif %}">
+                    <i class="bi bi-wallet2"></i> Store Credit Balances
+                </a>
+                {% endif %}
+
+                <div class="sidebar-section-title">Records</div>
+                <a href="{% url 'bill_list' %}" class="sidebar-link {% if 'bill' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-receipt"></i> Bills & Invoices
+                </a>
+                <a href="{% url 'order_list' %}" class="sidebar-link {% if 'order' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-cart-check"></i> Orders
+                </a>
+                <a href="{% url 'collections_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'collections_list' %}active{% endif %}">
+                    <i class="bi bi-journal-text"></i> Payment Logs
+                </a>
+                
+                <div class="sidebar-section-title">Account</div>
+                <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                    <i class="bi bi-person-gear"></i> My Profile & Security
+                </a>
+                <a href="{% url 'logout' %}" class="sidebar-link text-danger mt-2">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-bold text-white small text-truncate" style="max-width: 150px;">{{ user.username }}</div>
+                        <span class="badge 
+                            {% if user.is_superuser_role %}badge-superuser
+                            {% elif user.is_owner_role %}badge-owner
+                            {% elif user.is_staff_role %}badge-staff
+                            {% else %}badge-retailer{% endif %} rounded-pill mt-1">
+                            {{ user.get_role_display }}
+                        </span>
+                    </div>
+                    <a href="{% url 'profile' %}" class="text-white opacity-75 hover-opacity-100" title="My Profile"><i class="bi bi-gear-fill fs-5"></i></a>
+                </div>
+            </div>
+        </aside>
+        <div id="sidebarOverlay" onclick="closeSidebarMenu(event)"></div>
+        {% endif %}
+
+        <!-- Main Content Area -->
+        <div id="page-content-wrapper">
+            {% if user.is_authenticated %}
+            <!-- Universal Top Navbar -->
+            <nav class="navbar top-navbar sticky-top bg-white border-bottom shadow-sm py-2">
+                <div class="container-fluid px-3 d-flex align-items-center justify-content-between flex-nowrap">
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-light me-1 shadow-sm border p-1 px-2" id="sidebarToggle" onclick="toggleSidebarMenu(event)" title="Toggle Navigation Menu">
+                            <i class="bi bi-list fs-4"></i>
+                        </button>
+                        <a class="navbar-brand fw-extrabold text-dark d-flex align-items-center mb-0 me-0 me-md-3" href="{% url 'dashboard' %}">
+                            <i class="bi bi-box-seam-fill me-2 text-primary"></i>
+                            <span class="fw-bold fs-5 d-none d-sm-inline">AB Traders <span class="text-primary fw-normal small">CMS</span></span>
+                            <span class="fw-bold fs-6 d-sm-none">CMS 2.0</span>
+                        </a>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="text-end me-1 me-md-2 d-none d-sm-block">
+                            <div class="fw-bold text-dark small text-truncate" style="max-width: 150px;">{{ user.display_name }}</div>
+                            <div class="text-muted" style="font-size: 0.72rem;">Role: <strong>{{ user.get_role_display }}</strong></div>
+                        </div>
+                        <a href="{% url 'profile' %}" class="btn btn-outline-secondary btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="My Profile">
+                            <i class="bi bi-person-gear fs-6"></i>
+                        </a>
+                        <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Logout">
+                            <i class="bi bi-box-arrow-right fs-6"></i>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+            {% endif %}
+
+            <!-- Messages / Alerts -->
+            <div class="container-fluid px-3 px-md-4 pt-3">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm rounded-3" role="alert">
+                            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'error' or message.tags == 'danger' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Main Body Content -->
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/signature.js' %}"></script>
+    <script>
+    function toggleSidebarMenu(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        const wrapper = document.getElementById("wrapper");
+        if (wrapper) {
+            wrapper.classList.toggle("toggled");
+        }
+    }
+
+    function closeSidebarMenu(e) {
+        if (e) {
+            e.preventDefault();
+        }
+        const wrapper = document.getElementById("wrapper");
+        if (wrapper) {
+            wrapper.classList.remove("toggled");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const sidebarLinks = document.querySelectorAll(".sidebar-link");
+        sidebarLinks.forEach(link => {
+            link.addEventListener("click", function() {
+                if (window.innerWidth < 992) {
+                    closeSidebarMenu();
+                }
+            });
+        });
+    });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

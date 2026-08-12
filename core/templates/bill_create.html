@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate Bill - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9 col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-file-earmark-plus text-primary me-2"></i>Generate Standard Retailer Bill</h5>
+                <small class="text-muted">Issue a standard credit bill for a retailer shop with automated inventory stock deduction (Non-GST format).</small>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="id_retailer" class="form-label text-secondary small fw-semibold">Select Retailer Store</label>
+                        {{ form.retailer }}
+                        {% for error in form.retailer.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <h6 class="fw-bold mb-3"><i class="bi bi-box-seam me-2 text-primary"></i>Itemized Products & Quantities</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Unit Price</th>
+                                    <th>Available Stock</th>
+                                    <th style="width: 130px;">Quantity Billed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td class="fw-bold text-dark">{{ item.name }}</td>
+                                    <td class="fw-semibold text-primary">₹{{ item.price }}</td>
+                                    <td>
+                                        {% if item.stock_quantity > 0 %}
+                                            <span class="badge bg-success-subtle text-success border border-success">{{ item.stock_quantity }} in stock</span>
+                                        {% else %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger">Out of stock</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <input type="number" name="quantity_{{ item.id }}" value="0" min="0" max="{{ item.stock_quantity }}" class="form-control form-control-sm text-center">
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">No inventory items available.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_total_amount" class="form-label text-secondary small fw-semibold">Or Enter Custom Lump Sum Total Amount (₹)</label>
+                        {{ form.total_amount }}
+                        <small class="text-muted d-block mt-1">If itemized quantities above are selected, total will be calculated automatically.</small>
+                        {% for error in form.total_amount.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'bill_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4"><i class="bi bi-send me-1"></i> Issue Bill</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

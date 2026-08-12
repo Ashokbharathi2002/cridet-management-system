@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Order #{{ order.id }} - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9 col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Edit Order Details & Items</h5>
+                    <small class="text-muted">Modify order items, quantities, or retailer assignment for Order #{{ order.id }}.</small>
+                </div>
+                <a href="{% url 'order_detail' order.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to Order</a>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="retailer_id" class="form-label text-secondary small fw-semibold">Retailer Store</label>
+                        <select name="retailer_id" class="form-select">
+                            {% for r in retailers %}
+                                <option value="{{ r.id }}" {% if r.id == order.retailer_id %}selected{% endif %}>{{ r.shop_name }} ({{ r.shop_number }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <h6 class="fw-bold mb-3"><i class="bi bi-cart-check me-2 text-primary"></i>Order Items & Quantities</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Unit Price</th>
+                                    <th style="width: 140px;">Quantity Billed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in available_items %}
+                                <tr>
+                                    <td class="fw-bold text-dark">{{ item.name }}</td>
+                                    <td class="fw-semibold text-primary">₹{{ item.price }}</td>
+                                    <td>
+                                        <input type="number" name="quantity_{{ item.id }}" 
+                                            value="{% for key, qty in order_items_dict.items %}{% if key == item.id %}{{ qty }}{% endif %}{% endfor %}" 
+                                            min="0" class="form-control form-control-sm text-center">
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-3">No inventory items available.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4"><i class="bi bi-check-circle me-1"></i> Update Order</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

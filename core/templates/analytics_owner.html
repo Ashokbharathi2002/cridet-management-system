@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+{% block title %}Owner Financial & P&L Analytics - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Financial & Profit/Loss (P&L) Analytics</h3>
+        <p class="text-muted mb-0">Visual performance charts, revenue vs expenses breakdown, credit risk analysis, and net margin tracking.</p>
+    </div>
+    <div>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm"><i class="bi bi-arrow-left me-1"></i> Back to Dashboard</a>
+    </div>
+</div>
+
+<!-- Key Financial Metrics Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card p-3 border-start border-4 border-warning">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">TOTAL OUTSTANDING DEBT</div>
+                    <div class="fs-3 fw-bold text-danger mt-1">₹{{ total_credit_outstanding }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-warning-subtle text-warning">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card p-3 border-start border-4 border-success">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">TOTAL COLLECTIONS REALIZED</div>
+                    <div class="fs-3 fw-bold text-success mt-1">₹{{ total_collections }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-success-subtle text-success">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card p-3 border-start border-4 border-primary">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">APPROVED BILL REVENUE</div>
+                    <div class="fs-3 fw-bold text-primary mt-1">₹{{ total_approved_bills }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-primary-subtle text-primary">
+                    <i class="bi bi-receipt"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card p-3 border-start border-4 border-danger">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">PENDING RECEIVABLES</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">₹{{ pending_bills_amount }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-danger-subtle text-danger">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Interactive Graphic Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-bar-chart-line-fill me-2 text-primary"></i>Monthly Revenue, Expenses & Net Profit Trend</h6>
+                <span class="badge bg-primary-subtle text-primary fw-semibold">Last 6 Months</span>
+            </div>
+            <div style="height: 320px; position: relative;">
+                <canvas id="pnlTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 p-4 h-100">
+            <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-pie-chart-fill me-2 text-success"></i>Capital & Revenue Distribution</h6>
+            <div style="height: 250px; position: relative;" class="d-flex align-items-center justify-content-center">
+                <canvas id="capitalDistributionChart"></canvas>
+            </div>
+            <div class="mt-3 p-3 bg-light rounded-3">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span class="text-success fw-bold"><i class="bi bi-circle-fill me-1"></i>Realized Cash</span>
+                    <span>₹{{ total_collections }}</span>
+                </div>
+                <div class="d-flex justify-content-between small mb-1">
+                    <span class="text-danger fw-bold"><i class="bi bi-circle-fill me-1"></i>Credit Debt</span>
+                    <span>₹{{ total_credit_outstanding }}</span>
+                </div>
+                <div class="d-flex justify-content-between small">
+                    <span class="text-warning fw-bold"><i class="bi bi-circle-fill me-1"></i>Pending Receivables</span>
+                    <span>₹{{ pending_bills_amount }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Risk & Conversion Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-3 h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Top Credit Debtors (Exposure Risk)</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Shop Name</th>
+                            <th>Shop #</th>
+                            <th>Credit Balance</th>
+                            <th>Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in top_debtors %}
+                        <tr>
+                            <td class="fw-bold text-dark">{{ r.shop_name }}</td>
+                            <td>{{ r.shop_number }}</td>
+                            <td class="fw-bold text-danger">₹{{ r.credit_balance }}</td>
+                            <td>
+                                {% if r.credit_balance > 50000 %}
+                                    <span class="badge bg-danger">High Exposure</span>
+                                {% elif r.credit_balance > 20000 %}
+                                    <span class="badge bg-warning text-dark">Medium Exposure</span>
+                                {% else %}
+                                    <span class="badge bg-success">Low Risk</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">No retailer credit data available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bill Status Conversion -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-3 h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-funnel-fill me-2 text-primary"></i>Bill Status Conversion Breakdown</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-semibold text-success"><i class="bi bi-check-circle-fill me-1"></i>Approved / Closed Bills</span>
+                        <span class="fw-bold">{{ approved_count }}</span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar bg-success" style="width: 75%;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-semibold text-warning"><i class="bi bi-clock-fill me-1"></i>Pending Verification</span>
+                        <span class="fw-bold">{{ pending_count }}</span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar bg-warning" style="width: 18%;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-semibold text-danger"><i class="bi bi-x-circle-fill me-1"></i>Rejected Bills</span>
+                        <span class="fw-bold">{{ rejected_count }}</span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar bg-danger" style="width: 7%;"></div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light rounded-3">
+                    <div class="fw-bold small text-dark mb-1">Profit & Loss Performance Note</div>
+                    <small class="text-muted">Total Realized Cash: <strong>₹{{ total_collections }}</strong> | Approved Revenue: <strong>₹{{ total_approved_bills }}</strong>. Liquidity & credit conversion performance remains active.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Library & Chart Initialization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const months = {{ chart_months|safe }};
+    const revenue = {{ chart_revenue|safe }};
+    const expense = {{ chart_expense|safe }};
+    const profit = {{ chart_profit|safe }};
+
+    // 1. Bar/Line Trend Chart
+    const ctxTrend = document.getElementById('pnlTrendChart').getContext('2d');
+    new Chart(ctxTrend, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [
+                {
+                    label: 'Revenue (Collections)',
+                    data: revenue,
+                    backgroundColor: 'rgba(25, 135, 84, 0.75)',
+                    borderColor: '#198754',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Estimated Stock Cost (COGS)',
+                    data: expense,
+                    backgroundColor: 'rgba(220, 53, 69, 0.65)',
+                    borderColor: '#dc3545',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Net Margin',
+                    data: profit,
+                    type: 'line',
+                    borderColor: '#0d6efd',
+                    backgroundColor: '#0d6efd',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ₹' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) { return '₹' + value.toLocaleString(); }
+                    }
+                }
+            }
+        }
+    });
+
+    // 2. Doughnut Capital Distribution Chart
+    const ctxCap = document.getElementById('capitalDistributionChart').getContext('2d');
+    new Chart(ctxCap, {
+        type: 'doughnut',
+        data: {
+            labels: ['Realized Collections', 'Credit Debt', 'Pending Receivables'],
+            datasets: [{
+                data: [{{ total_collections }}, {{ total_credit_outstanding }}, {{ pending_bills_amount }}],
+                backgroundColor: ['#198754', '#dc3545', '#ffc107'],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

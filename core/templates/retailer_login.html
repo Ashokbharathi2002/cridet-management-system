@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Retailer Login - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-80 mt-5">
+    <div class="col-11 col-sm-8 col-md-6 col-lg-4">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="display-6 text-warning fw-bold mb-1"><i class="bi bi-shop me-2"></i>Retailer Portal</div>
+                    <p class="text-muted small">AB Traders Passwordless Sign In</p>
+                </div>
+
+                <!-- Nav Tabs for Login Selection -->
+                <ul class="nav nav-pills nav-justified mb-4 p-1 bg-light rounded-3" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold text-secondary" href="{% url 'login' %}">Staff / Owner</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active fw-semibold bg-warning text-dark" href="{% url 'retailer_login' %}">Retailer Portal</a>
+                    </li>
+                </ul>
+
+                <div class="alert alert-info py-2 px-3 small rounded-3 mb-4">
+                    <i class="bi bi-info-circle-fill me-1"></i> Sign in securely using your <strong>Shop Number</strong> and registered <strong>Phone Number</strong>.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_shop_number" class="form-label text-secondary small fw-semibold">Shop Number</label>
+                        {{ form.shop_number }}
+                    </div>
+                    <div class="mb-4">
+                        <label for="id_phone_number" class="form-label text-secondary small fw-semibold">Registered Phone Number</label>
+                        {{ form.phone_number }}
+                    </div>
+                    <button type="submit" class="btn btn-warning text-dark w-100 py-2 fw-bold rounded-3 shadow-sm">
+                        <i class="bi bi-shield-lock-fill me-2"></i>Authenticate Retailer
+                    </button>
+                </form>
+            </div>
+            <div class="card-footer bg-light border-0 text-center py-3 rounded-bottom-4">
+                <small class="text-muted">AB Traders &copy; 2026 Credit Management System</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}SuperUser Dashboard - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-shield-lock-fill text-primary me-2"></i>SuperUser Command Center</h3>
+        <p class="text-muted mb-0">System-wide user administration, configurations, and global metrics.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'credit_balances' %}" class="btn btn-outline-danger shadow-sm"><i class="bi bi-wallet2 me-1"></i> Credit Balances</a>
+        <a href="{% url 'user_create' %}" class="btn btn-primary shadow-sm"><i class="bi bi-person-plus-fill me-1"></i> Add User</a>
+        <a href="{% url 'bill_create' %}" class="btn btn-outline-secondary shadow-sm"><i class="bi bi-receipt me-1"></i> Generate Bill</a>
+    </div>
+</div>
+
+<!-- Stat Cards Grid -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg">
+        <div class="stat-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">TOTAL USERS</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">{{ total_users }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-primary-subtle text-primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg">
+        <div class="stat-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">RETAILER STORES</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">{{ total_retailers }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-warning-subtle text-warning">
+                    <i class="bi bi-shop"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg">
+        <a href="{% url 'credit_balances' %}" class="text-decoration-none">
+            <div class="stat-card p-3 border-danger-subtle bg-danger-subtle bg-opacity-10">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-danger small fw-bold">OUTSTANDING CREDIT</div>
+                        <div class="fs-3 fw-bold text-danger mt-1">₹{{ total_credit_outstanding }}</div>
+                    </div>
+                    <div class="stat-icon-wrapper bg-danger-subtle text-danger">
+                        <i class="bi bi-wallet2"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg">
+        <div class="stat-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">TOTAL COLLECTIONS</div>
+                    <div class="fs-3 fw-bold text-success mt-1">₹{{ total_collections }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-success-subtle text-success">
+                    <i class="bi bi-currency-rupee"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg">
+        <div class="stat-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">BILLS GENERATED</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">{{ total_bills }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-info-subtle text-info">
+                    <i class="bi bi-receipt"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Grid & Recent Users -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between border-0">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Recently Registered Accounts</h6>
+                <a href="{% url 'user_list' %}" class="btn btn-sm btn-link text-decoration-none">View All Users <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in recent_users %}
+                        <tr>
+                            <td class="fw-semibold">{{ u.username }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if u.role == 'SUPERUSER' %}badge-superuser
+                                    {% elif u.role == 'OWNER' %}badge-owner
+                                    {% elif u.role == 'STAFF' %}badge-staff
+                                    {% else %}badge-retailer{% endif %}">
+                                    {{ u.get_role_display }}
+                                </span>
+                            </td>
+                            <td>{{ u.phone_number|default:"-" }}</td>
+                            <td>
+                                {% if u.is_locked %}
+                                    <span class="badge bg-danger">Locked</span>
+                                {% elif not u.is_active %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ u.date_joined|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'user_edit' u.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2" title="Edit User"><i class="bi bi-pencil-square"></i></a>
+                                <a href="{% url 'user_toggle_lock' u.pk %}" class="btn btn-sm btn-outline-warning py-0 px-2" title="Toggle Lock"><i class="bi bi-lock-fill"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No recent users found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-sliders me-2 text-primary"></i>SuperUser System Actions</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'user_list' %}" class="btn btn-light text-start p-3 rounded-3 border d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-bold text-dark">User Administration</div>
+                            <small class="text-muted">Manage roles, lock accounts, reset passwords</small>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </a>
+                    <a href="{% url 'onboard_retailer' %}" class="btn btn-light text-start p-3 rounded-3 border d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-bold text-dark">Retailer Onboarding</div>
+                            <small class="text-muted">Create shop profile & initial credit setup</small>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </a>
+                    <a href="{% url 'inventory_list' %}" class="btn btn-light text-start p-3 rounded-3 border d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-bold text-dark">Inventory Management</div>
+                            <small class="text-muted">Add, update prices and stock levels</small>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </a>
+                    <a href="{% url 'owner_analytics' %}" class="btn btn-light text-start p-3 rounded-3 border d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-bold text-dark">Financial & P&L Reports</div>
+                            <small class="text-muted">Analyze collections, outstanding debt & revenue</small>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

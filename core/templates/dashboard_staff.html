@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Field Dashboard - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-person-badge-fill text-success me-2"></i>Staff Field Portal</h3>
+        <p class="text-muted mb-0">Log daily payments, check store credit balances, onboard retailers & take field orders.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'log_collection' %}" class="btn btn-success shadow-sm"><i class="bi bi-cash-stack me-1"></i> Log Collection</a>
+        <a href="{% url 'order_create' %}" class="btn btn-primary shadow-sm"><i class="bi bi-cart-plus me-1"></i> Take Field Order</a>
+        <a href="{% url 'onboard_retailer' %}" class="btn btn-outline-secondary shadow-sm"><i class="bi bi-shop me-1"></i> Onboard Retailer</a>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">YOUR COLLECTIONS TODAY</div>
+                    <div class="fs-3 fw-bold text-success mt-1">₹{{ todays_collections }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-success-subtle text-success">
+                    <i class="bi bi-cash"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">PENDING ORDERS</div>
+                    <div class="fs-3 fw-bold text-warning mt-1">{{ pending_orders.count }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-warning-subtle text-warning">
+                    <i class="bi bi-truck"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">PENDING BILL APPROVALS</div>
+                    <div class="fs-3 fw-bold text-danger mt-1">{{ pending_bills }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-danger-subtle text-danger">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Retailer Quick Credit Balance & Collection Table -->
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between border-0">
+        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-shop me-2 text-primary"></i>Retailer Stores & Outstanding Credit Balances</h6>
+        <a href="{% url 'credit_balances' %}" class="btn btn-sm btn-link text-decoration-none">Full Store List <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="table-responsive">
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Shop Number</th>
+                    <th>Shop Name</th>
+                    <th>Address</th>
+                    <th>Credit Balance</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in retailers %}
+                <tr>
+                    <td class="fw-semibold">{{ r.shop_number }}</td>
+                    <td class="fw-bold text-dark">{{ r.shop_name }}</td>
+                    <td class="small text-muted">{{ r.address|truncatechars:35 }}</td>
+                    <td class="fw-bold text-danger">₹{{ r.credit_balance }}</td>
+                    <td>
+                        <a href="{% url 'log_collection' %}?retailer_id={{ r.id }}" class="btn btn-sm btn-success py-1 px-2" title="Log Payment">
+                            <i class="bi bi-cash me-1"></i> Log Payment
+                        </a>
+                        <a href="{% url 'bill_create' %}?retailer_id={{ r.id }}" class="btn btn-sm btn-outline-primary py-1 px-2" title="Create Bill">
+                            <i class="bi bi-file-earmark-plus"></i> Bill
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No retailers registered in system yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

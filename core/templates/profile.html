@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile & Security - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-person-circle text-primary me-2"></i>My Profile & Password Settings</h3>
+        <p class="text-muted mb-0">Update your personal account information and upgrade your login password.</p>
+    </div>
+    <div>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary shadow-sm"><i class="bi bi-arrow-left me-1"></i> Dashboard</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Info Card -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-person-gear text-primary me-2"></i>Update Personal Details</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-semibold">Username</label>
+                        <input type="text" class="form-control bg-light" value="{{ user.username }}" disabled readonly>
+                        <div class="form-text text-muted small">Username cannot be changed.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-semibold">Role</label>
+                        <div>
+                            <span class="badge 
+                                {% if user.is_superuser_role %}badge-superuser
+                                {% elif user.is_owner_role %}badge-owner
+                                {% elif user.is_staff_role %}badge-staff
+                                {% else %}badge-retailer{% endif %} px-3 py-1">
+                                {{ user.get_role_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="id_first_name" class="form-label text-secondary small fw-semibold">First Name</label>
+                            {{ profile_form.first_name }}
+                            {% for error in profile_form.first_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_last_name" class="form-label text-secondary small fw-semibold">Last Name</label>
+                            {{ profile_form.last_name }}
+                            {% for error in profile_form.last_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label text-secondary small fw-semibold">Email Address</label>
+                        {{ profile_form.email }}
+                        {% for error in profile_form.email.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_phone_number" class="form-label text-secondary small fw-semibold">Phone Number</label>
+                        {{ profile_form.phone_number }}
+                        {% for error in profile_form.phone_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    {% if retailer_form %}
+                    <hr class="my-4">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-shop me-2 text-warning"></i>Retailer Shop Information</h6>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-semibold">Shop Number</label>
+                        <input type="text" class="form-control bg-light" value="{{ retailer_profile.shop_number }}" disabled readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_shop_name" class="form-label text-secondary small fw-semibold">Shop Name</label>
+                        {{ retailer_form.shop_name }}
+                        {% for error in retailer_form.shop_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_address" class="form-label text-secondary small fw-semibold">Shop Address</label>
+                        {{ retailer_form.address }}
+                        {% for error in retailer_form.address.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-primary fw-semibold px-4 shadow-sm">
+                            <i class="bi bi-check-circle me-1"></i> Save Profile Details
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Upgrade Card -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-shield-lock-fill text-warning me-2"></i>Change Password</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info py-2 px-3 small rounded-3 mb-4">
+                    <i class="bi bi-shield-check me-1"></i> Ensure your password is at least 8 characters long and contains a mix of letters and numbers for maximum security.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="change_password">
+
+                    {% for field in password_form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label text-secondary small fw-semibold">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+
+                    {% if password_form.non_field_errors %}
+                        <div class="alert alert-danger py-2 small mb-3">
+                            {% for error in password_form.non_field_errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-warning text-dark fw-bold px-4 shadow-sm">
+                            <i class="bi bi-key-fill me-1"></i> Upgrade Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Onboard Retailer - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-shop-window text-primary me-2"></i>Onboard New Retailer</h5>
+                <small class="text-muted">Register retailer shop profile and initialize credit balance ledger.</small>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label text-secondary small fw-semibold">Retailer Login Username</label>
+                        {{ form.username }}
+                        {% for error in form.username.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="id_shop_name" class="form-label text-secondary small fw-semibold">Shop Name</label>
+                            {{ form.shop_name }}
+                            {% for error in form.shop_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_shop_number" class="form-label text-secondary small fw-semibold">Shop Number (Unique ID)</label>
+                            {{ form.shop_number }}
+                            {% for error in form.shop_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="id_phone_number" class="form-label text-secondary small fw-semibold">Phone Number (For Authentication)</label>
+                            {{ form.phone_number }}
+                            {% for error in form.phone_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_initial_credit_balance" class="form-label text-secondary small fw-semibold">Initial Credit Balance (₹)</label>
+                            {{ form.initial_credit_balance }}
+                            {% for error in form.initial_credit_balance.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_address" class="form-label text-secondary small fw-semibold">Shop Address</label>
+                        {{ form.address }}
+                        {% for error in form.address.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4"><i class="bi bi-check-circle me-1"></i> Register Retailer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

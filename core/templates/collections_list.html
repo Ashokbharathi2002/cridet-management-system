@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Logs - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-journal-text text-success me-2"></i>Daily Payment Collections Log</h3>
+        <p class="text-muted mb-0">Separate daily collection records into Today's Collection and Overall Collection history.</p>
+    </div>
+    {% if not user.is_retailer_role %}
+    <div>
+        <a href="{% url 'log_collection' %}" class="btn btn-success shadow-sm"><i class="bi bi-cash-stack me-1"></i> Log New Collection</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Collection Summary Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="stat-card p-3 border-start border-4 border-success bg-white shadow-sm rounded-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-bold">TODAY'S COLLECTION TOTAL</div>
+                    <div class="fs-3 fw-bold text-success mt-1">₹{{ todays_total }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-success-subtle text-success">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card p-3 border-start border-4 border-primary bg-white shadow-sm rounded-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-bold">OVERALL COLLECTION TOTAL</div>
+                    <div class="fs-3 fw-bold text-primary mt-1">₹{{ overall_total }}</div>
+                </div>
+                <div class="stat-icon-wrapper bg-primary-subtle text-primary">
+                    <i class="bi bi-journal-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation for Collection Sections -->
+<ul class="nav nav-pills mb-3 gap-2" id="collectionTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-item btn btn-outline-success active fw-bold px-4 rounded-pill" id="today-tab" data-bs-toggle="pill" data-bs-target="#today-collections" type="button" role="tab">
+            <i class="bi bi-clock-history me-1"></i> Today's Collection ({{ todays_collections.count }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-item btn btn-outline-primary fw-bold px-4 rounded-pill" id="overall-tab" data-bs-toggle="pill" data-bs-target="#overall-collections" type="button" role="tab">
+            <i class="bi bi-collection-fill me-1"></i> Overall Collection ({{ overall_collections.count }})
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="collectionTabsContent">
+    <!-- Today's Collection Tab -->
+    <div class="tab-pane fade show active" id="today-collections" role="tabpanel">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-sun text-warning me-2"></i>Today's Logged Payments</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ref #</th>
+                            <th>Retailer Shop</th>
+                            <th>Collected By</th>
+                            <th>Bill Applied</th>
+                            <th>Amount Collected</th>
+                            <th>Time</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in todays_collections %}
+                        <tr>
+                            <td class="fw-semibold">#COL-{{ c.id }}</td>
+                            <td class="fw-bold text-dark">{{ c.retailer.shop_name }} ({{ c.retailer.shop_number }})</td>
+                            <td>{% if c.collected_by %}{{ c.collected_by.display_name }}{% else %}System{% endif %}</td>
+                            <td>
+                                {% if c.bill %}
+                                    <a href="{% url 'bill_detail' c.bill.pk %}" class="badge bg-outline-primary text-primary border border-primary text-decoration-none">
+                                        <i class="bi bi-receipt me-1"></i>{{ c.bill.bill_number }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-success fs-6">₹{{ c.amount_collected }}</td>
+                            <td class="small text-muted">{{ c.collected_at|date:"H:i" }}</td>
+                            <td class="small text-muted">{{ c.notes|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">No collections logged today yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Collection Tab -->
+    <div class="tab-pane fade" id="overall-collections" role="tabpanel">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Complete Historical Payment Log</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ref #</th>
+                            <th>Retailer Shop</th>
+                            <th>Collected By</th>
+                            <th>Bill Applied</th>
+                            <th>Amount Collected</th>
+                            <th>Date & Time</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in overall_collections %}
+                        <tr>
+                            <td class="fw-semibold">#COL-{{ c.id }}</td>
+                            <td class="fw-bold text-dark">{{ c.retailer.shop_name }} ({{ c.retailer.shop_number }})</td>
+                            <td>{% if c.collected_by %}{{ c.collected_by.display_name }}{% else %}System{% endif %}</td>
+                            <td>
+                                {% if c.bill %}
+                                    <a href="{% url 'bill_detail' c.bill.pk %}" class="badge bg-outline-primary text-primary border border-primary text-decoration-none">
+                                        <i class="bi bi-receipt me-1"></i>{{ c.bill.bill_number }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-success fs-6">₹{{ c.amount_collected }}</td>
+                            <td class="small text-muted">{{ c.collected_at|date:"M d, Y H:i" }}</td>
+                            <td class="small text-muted">{{ c.notes|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">No payment collections logged yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

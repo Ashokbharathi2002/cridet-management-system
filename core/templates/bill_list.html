@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Bills & Invoices - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-receipt text-primary me-2"></i>Bills & Invoices Ledger</h3>
+        <p class="text-muted mb-0">View generated bills, track approvals, and manage pending invoice statements.</p>
+    </div>
+    {% if not user.is_retailer_role %}
+    <div>
+        <a href="{% url 'bill_create' %}" class="btn btn-primary shadow-sm"><i class="bi bi-file-earmark-plus me-1"></i> Generate New Bill</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Search & Status Filter -->
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Search by bill #, retailer shop name...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="status" class="form-select">
+                    <option value="">-- Filter by Status --</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending Approval</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-secondary w-100">Filter</button>
+                <a href="{% url 'bill_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bills Table -->
+<div class="card shadow-sm border-0 rounded-3">
+    <div class="table-responsive">
+        <table class="table custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Bill Number</th>
+                    <th>Retailer Shop</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                    <th>Created By</th>
+                    <th>Issue Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in bills %}
+                <tr>
+                    <td class="fw-bold"><a href="{% url 'bill_detail' b.pk %}" class="text-decoration-none">{{ b.bill_number }}</a></td>
+                    <td class="fw-semibold text-dark">{{ b.retailer.shop_name }} ({{ b.retailer.shop_number }})</td>
+                    <td class="fw-bold text-primary fs-6">₹{{ b.total_amount }}</td>
+                    <td>
+                        {% if b.status == 'approved' %}
+                            <span class="badge bg-success px-3 py-1"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                        {% elif b.status == 'paid' %}
+                            <span class="badge bg-primary px-3 py-1"><i class="bi bi-cash-stack me-1"></i>Paid</span>
+                        {% elif b.status == 'rejected' %}
+                            <span class="badge bg-danger px-3 py-1"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark px-3 py-1"><i class="bi bi-clock me-1"></i>Pending</span>
+                        {% endif %}
+                    </td>
+                    <td class="small text-muted">{% if b.created_by %}{{ b.created_by.display_name }}{% else %}System{% endif %}</td>
+                    <td class="small text-muted">{{ b.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'bill_detail' b.pk %}" class="btn btn-sm btn-outline-primary py-1 px-2"><i class="bi bi-eye me-1"></i> View Invoice</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">No bills found matching your request.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

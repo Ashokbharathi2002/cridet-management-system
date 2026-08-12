@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Reject Bill #{{ bill.bill_number }} - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="fw-bold mb-0 text-danger"><i class="bi bi-x-circle-fill me-2"></i>Reject Bill #{{ bill.bill_number }}</h5>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted small mb-3">Please specify the mandatory reason for rejecting this bill (e.g. discrepancy in quantity, incorrect pricing, duplicate bill).</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="id_rejection_reason" class="form-label text-secondary small fw-semibold">Mandatory Rejection Reason</label>
+                        {{ form.rejection_reason }}
+                        {% for error in form.rejection_reason.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'bill_detail' bill.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-danger fw-bold px-4">Submit Rejection</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

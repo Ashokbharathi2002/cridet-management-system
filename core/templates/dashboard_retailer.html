@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Retailer Portal - AB Traders CMS{% endblock %}
+
+{% block content %}
+{% if profile %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-shop text-warning me-2"></i>{{ profile.shop_name }}</h3>
+        <p class="text-muted mb-0">Shop #: <strong>{{ profile.shop_number }}</strong> | Address: {{ profile.address }}</p>
+    </div>
+    <div>
+        <a href="{% url 'order_create' %}" class="btn btn-warning text-dark font-weight-bold fw-bold shadow-sm">
+            <i class="bi bi-cart-plus-fill me-1"></i> Place New Order
+        </a>
+    </div>
+</div>
+
+<!-- Outstanding Credit Banner Card -->
+<div class="card shadow-sm border-0 rounded-4 bg-gradient text-white mb-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+    <div class="card-body p-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="text-uppercase text-warning font-monospace small fw-bold mb-1">OUTSTANDING CREDIT BALANCE</div>
+                <div class="display-5 fw-bold mb-2" style="color: rgb(11, 1, 1);">₹{{ profile.credit_balance }}</div>
+                <p class="text-light opacity-75 mb-0 small">This balance represents your pending total across all approved bills minus payments collected.</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{% url 'collections_list' %}" class="btn btn-outline-light rounded-pill px-4">
+                    <i class="bi bi-journal-text me-1"></i> Payment Logs
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dedicated Quick Login QR Code Section -->
+<div class="card shadow-sm border-0 rounded-4 mb-4" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-left: 5px solid #0d6efd !important;">
+    <div class="card-body p-4">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center mb-3 mb-md-0">
+                {% if profile.qr_code %}
+                    <img src="{{ profile.qr_code.url }}" alt="Login QR Code" class="img-fluid rounded-3 shadow-sm bg-white p-2 border" style="max-width: 140px;">
+                {% else %}
+                    <div class="p-3 bg-white rounded-3 border d-inline-block text-muted">
+                        <i class="bi bi-qr-code-scan fs-1 d-block mb-1 text-secondary"></i>
+                        <span class="small font-monospace">No QR Code</span>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-9">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-qr-code text-primary me-2"></i>Retailer Quick Login QR Code</h5>
+                    <span class="badge bg-primary rounded-pill px-3 py-1">Retailer Portal Pass</span>
+                </div>
+                <p class="text-muted small mb-2">Scan this QR code using any smartphone camera or QR reader to quickly log in to your AB Traders account without typing credentials manually.</p>
+                <div class="d-flex flex-wrap gap-3 align-items-center small text-secondary">
+                    <div><i class="bi bi-shop me-1 text-primary"></i>Shop #: <strong>{{ profile.shop_number }}</strong></div>
+                    <div><i class="bi bi-telephone me-1 text-success"></i>Phone: <strong>{{ profile.user.phone_number|default:"Not Registered" }}</strong></div>
+                    {% if profile.qr_code %}
+                        <a href="{{ profile.qr_code.url }}" download="QR_{{ profile.shop_number }}.png" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            <i class="bi bi-download me-1"></i> Download QR Code
+                        </a>
+                    {% else %}
+                        <span class="text-muted fst-italic"><i class="bi bi-info-circle me-1"></i>Contact SuperUser or Owner to generate your QR Code.</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Bills & Approvals -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 rounded-3 h-100">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between border-0">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-receipt me-2 text-primary"></i>My Bills & Action Status</h6>
+                <a href="{% url 'bill_list' %}" class="btn btn-sm btn-link text-decoration-none">View All Bills <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Bill #</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in my_bills %}
+                        <tr>
+                            <td class="fw-semibold"><a href="{% url 'bill_detail' b.pk %}" class="text-decoration-none">{{ b.bill_number }}</a></td>
+                            <td class="fw-bold text-dark">₹{{ b.total_amount }}</td>
+                            <td>
+                                {% if b.status == 'approved' %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% elif b.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Pending Action</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ b.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                {% if b.status == 'pending' %}
+                                    <a href="{% url 'approve_bill' b.pk %}" class="btn btn-sm btn-success py-0 px-2 fw-semibold me-1" title="Approve Bill">Approve</a>
+                                    <a href="{% url 'reject_bill' b.pk %}" class="btn btn-sm btn-outline-danger py-0 px-2 fw-semibold" title="Reject Bill">Reject</a>
+                                {% else %}
+                                    <a href="{% url 'bill_detail' b.pk %}" class="btn btn-sm btn-light py-0 px-2 text-muted">View</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No bills issued yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Orders & Status -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 rounded-3 h-100">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between border-0">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-cart-check me-2 text-warning"></i>Recent Orders</h6>
+                <a href="{% url 'order_list' %}" class="btn btn-sm btn-link text-decoration-none">View All <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for o in my_orders %}
+                        <tr>
+                            <td class="fw-semibold">#{{ o.id }}</td>
+                            <td>
+                                {% if o.status == 'delivered' %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Delivered</span>
+                                {% elif o.status == 'processing' %}
+                                    <span class="badge bg-info"><i class="bi bi-gear me-1"></i>Processing</span>
+                                {% elif o.status == 'placed' %}
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Placed</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ o.created_at|date:"M d, H:i" }}</td>
+                            <td><a href="{% url 'order_detail' o.pk %}" class="btn btn-sm btn-outline-secondary py-0 px-2">View</a></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">No orders placed yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-danger">
+    Retailer profile missing for your user account. Please contact system admin.
+</div>
+{% endif %}
+{% endblock %}

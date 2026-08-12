@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Collection - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-cash-stack text-success me-2"></i>Log Daily Retailer Collection</h5>
+                <small class="text-muted">Record cash/UPI payment collected from a retailer store.</small>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_retailer" class="form-label text-secondary small fw-semibold">Retailer Store</label>
+                        {{ form.retailer }}
+                        {% for error in form.retailer.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_bill" class="form-label text-secondary small fw-semibold">Apply Payment to Specific Bill (Optional)</label>
+                        {{ form.bill }}
+                        <small class="text-muted d-block mt-1">Selecting a bill will automatically mark its status as Paid upon submission.</small>
+                        {% for error in form.bill.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_amount_collected" class="form-label text-secondary small fw-semibold">Amount Collected (₹)</label>
+                        {{ form.amount_collected }}
+                        {% for error in form.amount_collected.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_notes" class="form-label text-secondary small fw-semibold">Notes / Transaction Reference</label>
+                        {{ form.notes }}
+                        {% for error in form.notes.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'collections_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-success fw-bold px-4"><i class="bi bi-cash-coin me-1"></i> Log Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

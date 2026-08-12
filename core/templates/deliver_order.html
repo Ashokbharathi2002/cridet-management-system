@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Deliver Order #{{ order.id }} - AB Traders CMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="fw-bold mb-0 text-success"><i class="bi bi-truck me-2"></i>Deliver Order #{{ order.id }}</h5>
+                <small class="text-muted">Retailer: <strong>{{ order.retailer.shop_name }}</strong> (Shop #: {{ order.retailer.shop_number }})</small>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info py-2 px-3 small rounded-3 mb-3">
+                    <i class="bi bi-info-circle-fill me-1"></i> Please ask the retailer to sign inside the box below to acknowledge receipt of delivery.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.signature_data }}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">Retailer Digital Signature</label>
+                        <div class="signature-pad-container mb-2">
+                            <canvas id="signature-canvas" width="450" height="180"></canvas>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="bi bi-hand-index-thumb me-1"></i>Draw signature using touch screen or mouse.</small>
+                            <button type="button" id="clear-signature" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eraser me-1"></i> Clear Canvas
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-success fw-bold px-4 shadow-sm">
+                            <i class="bi bi-check-circle-fill me-1"></i> Complete Delivery & Issue Bill
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
