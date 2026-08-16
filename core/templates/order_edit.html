@@ -9,7 +9,7 @@
             <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Edit Order Details & Items</h5>
-                    <small class="text-muted">Modify order items, quantities, or retailer assignment for Order #{{ order.id }}.</small>
+                    <small class="text-muted">Modify order items, quantities, notes, timing, or retailer assignment for Order #{{ order.id }}.</small>
                 </div>
                 <a href="{% url 'order_detail' order.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to Order</a>
             </div>
@@ -17,13 +17,26 @@
                 <form method="post">
                     {% csrf_token %}
                     
+                    <div class="row g-3 mb-4">
+                        {% if not user.is_retailer_role %}
+                        <div class="col-md-6">
+                            <label for="retailer_id" class="form-label text-secondary small fw-semibold">Retailer Store</label>
+                            <select name="retailer_id" class="form-select">
+                                {% for r in retailers %}
+                                    <option value="{{ r.id }}" {% if r.id == order.retailer_id %}selected{% endif %}>{{ r.shop_name }} ({{ r.shop_number }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6">
+                            <label for="delivery_time" class="form-label text-secondary small fw-semibold"><i class="bi bi-clock-history me-1 text-primary"></i>Order Timing / Scheduled Delivery</label>
+                            <input type="datetime-local" name="delivery_time" id="delivery_time" value="{{ formatted_delivery_time }}" class="form-control">
+                        </div>
+                    </div>
+
                     <div class="mb-4">
-                        <label for="retailer_id" class="form-label text-secondary small fw-semibold">Retailer Store</label>
-                        <select name="retailer_id" class="form-select">
-                            {% for r in retailers %}
-                                <option value="{{ r.id }}" {% if r.id == order.retailer_id %}selected{% endif %}>{{ r.shop_name }} ({{ r.shop_number }})</option>
-                            {% endfor %}
-                        </select>
+                        <label for="order_note" class="form-label text-secondary small fw-semibold"><i class="bi bi-journal-text me-1 text-info"></i>Order Note / Special Instructions</label>
+                        <textarea name="order_note" id="order_note" rows="2" class="form-control" placeholder="Add any specific instructions or notes for this order...">{{ order.order_note|default:'' }}</textarea>
                     </div>
 
                     <h6 class="fw-bold mb-3"><i class="bi bi-cart-check me-2 text-primary"></i>Order Items & Quantities</h6>

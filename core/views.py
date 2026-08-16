@@ -283,6 +283,10 @@ def user_edit_view(request, pk):
 @role_required(['SUPERUSER', 'OWNER'])
 def user_toggle_lock_view(request, pk):
     target_user = get_object_or_404(User, pk=pk)
+    if not request.user.is_superuser_role() and target_user.role in [User.Role.SUPERUSER, User.Role.OWNER]:
+        messages.error(request, "Only Super Users can perform actions on Super User or Owner accounts.")
+        return redirect('user_list')
+
     if target_user == request.user:
         messages.error(request, "You cannot lock your own account.")
         return redirect('user_list')
@@ -297,6 +301,10 @@ def user_toggle_lock_view(request, pk):
 @role_required(['SUPERUSER', 'OWNER'])
 def user_toggle_active_view(request, pk):
     target_user = get_object_or_404(User, pk=pk)
+    if not request.user.is_superuser_role() and target_user.role in [User.Role.SUPERUSER, User.Role.OWNER]:
+        messages.error(request, "Only Super Users can perform actions on Super User or Owner accounts.")
+        return redirect('user_list')
+
     if target_user == request.user:
         messages.error(request, "You cannot deactivate your own account.")
         return redirect('user_list')
@@ -311,6 +319,9 @@ def user_toggle_active_view(request, pk):
 @role_required(['SUPERUSER', 'OWNER'])
 def user_reset_password_view(request, pk):
     target_user = get_object_or_404(User, pk=pk)
+    if not request.user.is_superuser_role() and target_user.role in [User.Role.SUPERUSER, User.Role.OWNER]:
+        messages.error(request, "Only Super Users can reset passwords for Super User or Owner accounts.")
+        return redirect('user_list')
 
     if request.method == 'POST':
         form = PasswordResetAdminForm(request.POST)
@@ -599,7 +610,7 @@ def bill_create_view(request):
             bill.bill_number = f"BILL-{timezone.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
             bill.status = 'pending'
             
-            # Check items and inventory stock
+            # Process items and update inventory stock (allowing negative stock)
             total_calc = Decimal('0.00')
             bill_items_to_create = []
 
@@ -610,9 +621,6 @@ def bill_create_view(request):
                         qty = int(val)
                         if qty > 0:
                             item_obj = Item.objects.get(pk=item_id)
-                            if qty > item_obj.stock_quantity:
-                                messages.error(request, f"Insufficient stock for '{item_obj.name}'. Available: {item_obj.stock_quantity}, requested: {qty}.")
-                                return render(request, 'bill_create.html', {'form': form, 'items': items})
                             bill_items_to_create.append((item_obj, qty, item_obj.price))
                             total_calc += (Decimal(qty) * item_obj.price)
                     except (ValueError, Item.DoesNotExist):
@@ -634,7 +642,7 @@ def bill_create_view(request):
                     quantity=qty,
                     price=price
                 )
-                item_obj.stock_quantity = max(0, item_obj.stock_quantity - qty)
+                item_obj.stock_quantity -= qty
                 item_obj.save()
 
             messages.success(request, f"Bill #{bill.bill_number} generated for {bill.retailer.shop_name}! Stock updated automatically.")
@@ -798,7 +806,8 @@ def order_list_view(request):
 
 @role_required(['SUPERUSER', 'OWNER', 'STAFF', 'RETAILER'])
 def order_create_view(request):
-    items = Item.objects.filter(stock_quantity__gt=0)
+    items = Item.objects.all().order_by('name')
+    default_delivery_time = (timezone.now() + timezone.timedelta(minutes=30)).strftime('%Y-%m-%dT%H:%M')
 
     if request.method == 'POST':
         if request.user.is_retailer_role():
@@ -809,10 +818,25 @@ def order_create_view(request):
             retailer = get_object_or_404(RetailerProfile, pk=retailer_id)
             staff_user = request.user
 
+        order_note = request.POST.get('order_note', '').strip()
+        delivery_time_raw = request.POST.get('delivery_time')
+        delivery_time = None
+        if delivery_time_raw:
+            try:
+                delivery_time = timezone.datetime.fromisoformat(delivery_time_raw)
+                if timezone.is_naive(delivery_time):
+                    delivery_time = timezone.make_aware(delivery_time)
+            except ValueError:
+                delivery_time = timezone.now() + timezone.timedelta(minutes=30)
+        else:
+            delivery_time = timezone.now() + timezone.timedelta(minutes=30)
+
         order = Order.objects.create(
             retailer=retailer,
             taken_by_staff=staff_user,
-            status='placed'
+            status='placed',
+            order_note=order_note,
+            delivery_time=delivery_time
         )
 
         total = Decimal('0.00')
@@ -841,14 +865,19 @@ def order_create_view(request):
             messages.error(request, "Please select at least one item to place an order.")
             return render(request, 'order_create.html', {
                 'items': items,
-                'retailers': RetailerProfile.objects.all() if not request.user.is_retailer_role() else None
+                'retailers': RetailerProfile.objects.all() if not request.user.is_retailer_role() else None,
+                'default_delivery_time': default_delivery_time,
             })
 
         messages.success(request, f"Order #{order.id} placed successfully!")
         return redirect('order_detail', pk=order.pk)
 
     retailers = RetailerProfile.objects.all() if not request.user.is_retailer_role() else None
-    return render(request, 'order_create.html', {'items': items, 'retailers': retailers})
+    return render(request, 'order_create.html', {
+        'items': items,
+        'retailers': retailers,
+        'default_delivery_time': default_delivery_time,
+    })
 
 
 @role_required(['SUPERUSER', 'OWNER', 'STAFF', 'RETAILER'])
@@ -864,16 +893,34 @@ def order_detail_view(request, pk):
     return render(request, 'order_detail.html', {'order': order})
 
 
-@role_required(['SUPERUSER', 'OWNER', 'STAFF'])
+@role_required(['SUPERUSER', 'OWNER', 'STAFF', 'RETAILER'])
 def order_edit_view(request, pk):
-    """Allows Superuser, Owner, and Staff to edit order items and quantities."""
+    """Allows Superuser, Owner, Staff, and Retailer to edit order items, quantities, notes, and timings."""
     order = get_object_or_404(Order, pk=pk)
+    if request.user.is_retailer_role():
+        profile = getattr(request.user, 'retailer_profile', None)
+        if order.retailer != profile:
+            messages.error(request, "Access denied.")
+            return redirect('dashboard')
+
     available_items = Item.objects.all().order_by('name')
 
     if request.method == 'POST':
         retailer_id = request.POST.get('retailer_id')
-        if retailer_id:
+        if retailer_id and not request.user.is_retailer_role():
             order.retailer = get_object_or_404(RetailerProfile, pk=retailer_id)
+
+        order_note = request.POST.get('order_note', '').strip()
+        delivery_time_raw = request.POST.get('delivery_time')
+        if delivery_time_raw:
+            try:
+                delivery_time = timezone.datetime.fromisoformat(delivery_time_raw)
+                if timezone.is_naive(delivery_time):
+                    delivery_time = timezone.make_aware(delivery_time)
+                order.delivery_time = delivery_time
+            except ValueError:
+                pass
+        order.order_note = order_note
 
         # Update order items
         order.items.all().delete()
@@ -904,11 +951,14 @@ def order_edit_view(request, pk):
 
         return redirect('order_detail', pk=order.pk)
 
+    formatted_delivery_time = order.delivery_time.strftime('%Y-%m-%dT%H:%M') if order.delivery_time else ''
+
     context = {
         'order': order,
         'available_items': available_items,
-        'retailers': RetailerProfile.objects.all(),
-        'order_items_dict': {item.item_id: item.quantity for item in order.items.all()}
+        'retailers': RetailerProfile.objects.all() if not request.user.is_retailer_role() else None,
+        'order_items_dict': {item.item_id: item.quantity for item in order.items.all()},
+        'formatted_delivery_time': formatted_delivery_time,
     }
     return render(request, 'order_edit.html', context)
 
@@ -952,7 +1002,7 @@ def deliver_order_view(request, pk):
                         price=order_item.price
                     )
                     # Automatically deduct inventory stock quantity
-                    order_item.item.stock_quantity = max(0, order_item.item.stock_quantity - order_item.quantity)
+                    order_item.item.stock_quantity -= order_item.quantity
                     order_item.item.save()
 
                 messages.success(
@@ -967,6 +1017,35 @@ def deliver_order_view(request, pk):
         form = DeliverySignatureForm()
 
     return render(request, 'deliver_order.html', {'order': order, 'form': form})
+
+
+@role_required(['SUPERUSER', 'OWNER', 'STAFF', 'RETAILER'])
+def cancel_order_view(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+
+    if request.user.is_retailer_role():
+        profile = getattr(request.user, 'retailer_profile', None)
+        if order.retailer != profile:
+            messages.error(request, "Access denied.")
+            return redirect('dashboard')
+
+    if order.status in ['delivered', 'cancelled']:
+        messages.warning(request, f"Order #{order.id} is already {order.get_status_display()}.")
+        return redirect('order_detail', pk=order.pk)
+
+    order.status = 'cancelled'
+    order.save()
+    messages.success(request, f"Order #{order.id} has been cancelled successfully.")
+    return redirect('order_detail', pk=order.pk)
+
+
+@role_required(['SUPERUSER', 'OWNER', 'STAFF'])
+def delete_order_view(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    order_id = order.id
+    order.delete()
+    messages.success(request, f"Order #{order_id} has been deleted successfully.")
+    return redirect('order_list')
 
 
 # ==========================================

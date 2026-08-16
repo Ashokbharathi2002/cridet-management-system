@@ -70,6 +70,77 @@
     </div>
 </div>
 
+<!-- Dedicated Retailer Statement Panel (Requirement #13) -->
+<div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-file-earmark-text-fill text-primary me-2"></i>Retailer Account Statement & Ledger Panel</h5>
+            <small class="text-muted">Complete historical transaction ledger tracking bills issued, collections received, and running credit balance.</small>
+        </div>
+        <button onclick="window.print();" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer me-1"></i> Print Statement</button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Transaction Type</th>
+                        <th>Reference #</th>
+                        <th>Details / Status</th>
+                        <th class="text-end">Amount (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in my_bills %}
+                    <tr>
+                        <td class="small text-muted">{{ b.created_at|date:"Y-m-d H:i" }}</td>
+                        <td><span class="badge bg-danger-subtle text-danger border border-danger"><i class="bi bi-receipt me-1"></i>Bill Issued (Debit)</span></td>
+                        <td class="fw-semibold"><a href="{% url 'bill_detail' b.pk %}" class="text-decoration-none">{{ b.bill_number }}</a></td>
+                        <td>
+                            {% if b.status == 'approved' %}
+                                <span class="badge bg-success">Approved (+Credit)</span>
+                            {% elif b.status == 'paid' %}
+                                <span class="badge bg-primary">Closed / Paid</span>
+                            {% elif b.status == 'rejected' %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending Approval</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-bold text-danger">+₹{{ b.total_amount }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    {% for c in my_collections %}
+                    <tr>
+                        <td class="small text-muted">{{ c.collected_at|date:"Y-m-d H:i" }}</td>
+                        <td><span class="badge bg-success-subtle text-success border border-success"><i class="bi bi-cash-coin me-1"></i>Payment Received (Credit)</span></td>
+                        <td class="fw-semibold">#COL-{{ c.id }}</td>
+                        <td class="small text-muted">
+                            {% if c.bill %}Applied to Bill {{ c.bill.bill_number }}{% else %}Direct Account Payment{% endif %}
+                        </td>
+                        <td class="text-end fw-bold text-success">-₹{{ c.amount_collected }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if not my_bills and not my_collections %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No statement ledger transactions recorded yet.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="4" class="text-end fw-bold">Current Net Outstanding Credit Balance:</th>
+                        <th class="text-end fs-5 fw-bold text-primary">₹{{ profile.credit_balance }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- My Bills & Approvals -->
 <div class="row g-4 mb-4">
     <div class="col-lg-7">
@@ -97,6 +168,8 @@
                             <td>
                                 {% if b.status == 'approved' %}
                                     <span class="badge bg-success">Approved</span>
+                                {% elif b.status == 'paid' %}
+                                    <span class="badge bg-primary">Closed / Paid</span>
                                 {% elif b.status == 'rejected' %}
                                     <span class="badge bg-danger">Rejected</span>
                                 {% else %}

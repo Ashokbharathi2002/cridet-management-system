@@ -8,10 +8,10 @@
         <div class="card shadow-sm border-0 rounded-4">
             <div class="card-header bg-white py-3 border-0">
                 <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-cash-stack text-success me-2"></i>Log Daily Retailer Collection</h5>
-                <small class="text-muted">Record cash/UPI payment collected from a retailer store.</small>
+                <small class="text-muted">Record cash/UPI payment collected from a retailer store and apply to specific unpaid bills.</small>
             </div>
             <div class="card-body p-4">
-                <form method="post">
+                <form method="post" id="collectionForm">
                     {% csrf_token %}
                     
                     <div class="mb-3">
@@ -21,9 +21,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="id_bill" class="form-label text-secondary small fw-semibold">Apply Payment to Specific Bill (Optional)</label>
+                        <label for="id_bill" class="form-label text-secondary small fw-semibold">Select Specific Unpaid Bill (Optional)</label>
                         {{ form.bill }}
-                        <small class="text-muted d-block mt-1">Selecting a bill will automatically mark its status as Paid upon submission.</small>
+                        <small class="text-muted d-block mt-1"><i class="bi bi-info-circle me-1"></i>Selecting a specific bill will automatically update its status to <strong>Paid</strong> upon collection.</small>
                         {% for error in form.bill.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
                     </div>
 
@@ -48,4 +48,18 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const retailerSelect = document.getElementById("id_retailer");
+    if (retailerSelect) {
+        retailerSelect.addEventListener("change", function() {
+            const retailerId = this.value;
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set("retailer_id", retailerId);
+            window.location.href = currentUrl.toString();
+        });
+    }
+});
+</script>
 {% endblock %}

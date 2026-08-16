@@ -47,6 +47,8 @@ urlpatterns = [
     path('orders/<int:pk>/', views.order_detail_view, name='order_detail'),
     path('orders/<int:pk>/edit/', views.order_edit_view, name='order_edit'),
     path('orders/<int:pk>/deliver/', views.deliver_order_view, name='deliver_order'),
+    path('orders/<int:pk>/cancel/', views.cancel_order_view, name='cancel_order'),
+    path('orders/<int:pk>/delete/', views.delete_order_view, name='delete_order'),
 
     # Owner Analytics
     path('analytics/', views.owner_analytics_view, name='owner_analytics'),

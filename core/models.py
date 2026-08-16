@@ -51,7 +51,7 @@ class Item(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    stock_quantity = models.PositiveIntegerField(default=0)
+    stock_quantity = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -105,6 +105,8 @@ class Order(models.Model):
     taken_by_staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='taken_orders')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='placed')
     digital_signature = models.ImageField(upload_to='signatures/', null=True, blank=True)
+    order_note = models.TextField(blank=True, null=True)
+    delivery_time = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property

@@ -163,3 +163,56 @@ class CMSFeatureRequirementsTest(TestCase):
         self.assertEqual(bill.status, 'approved')
         self.assertEqual(bill.total_amount, 750.00)
 
+    def test_negative_inventory_billing(self):
+        """Negative inventory billing test."""
+        from core.models import Item, Bill
+        item = Item.objects.create(name='Low Stock Item', price=200.00, stock_quantity=5)
+
+        self.client.force_login(self.superuser)
+        res = self.client.post('/bills/create/', {
+            'retailer': self.retailer_profile.pk,
+            f'quantity_{item.pk}': 12
+        })
+        self.assertRedirects(res, '/bills/')
+
+        item.refresh_from_db()
+        self.assertEqual(item.stock_quantity, -7)
+
+    def test_order_creation_with_note_and_timing(self):
+        """Order creation with Order Note and Delivery Time."""
+        from core.models import Item, Order
+        item = Item.objects.create(name='Gadget B', price=300.00, stock_quantity=10)
+
+        self.client.force_login(self.retailer_user)
+        res = self.client.post('/orders/create/', {
+            'order_note': 'Deliver via back entrance',
+            'delivery_time': '2026-08-15T10:30',
+            f'quantity_{item.pk}': 2
+        })
+        order = Order.objects.latest('id')
+        self.assertRedirects(res, f'/orders/{order.pk}/')
+        self.assertEqual(order.order_note, 'Deliver via back entrance')
+        self.assertIsNotNone(order.delivery_time)
+
+    def test_order_cancellation_and_deletion(self):
+        """Order cancellation and deletion flow."""
+        from core.models import Order
+        order = Order.objects.create(
+            retailer=self.retailer_profile,
+            taken_by_staff=self.staff,
+            status='placed'
+        )
+
+        # Retailer cancels order
+        self.client.force_login(self.retailer_user)
+        res = self.client.get(f'/orders/{order.pk}/cancel/')
+        self.assertRedirects(res, f'/orders/{order.pk}/')
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'cancelled')
+
+        # Superuser deletes order
+        self.client.force_login(self.superuser)
+        del_res = self.client.get(f'/orders/{order.pk}/delete/')
+        self.assertRedirects(del_res, '/orders/')
+        self.assertFalse(Order.objects.filter(pk=order.pk).exists())
+

@@ -50,9 +50,12 @@ class UserCreateForm(forms.ModelForm):
         phone_number = self.cleaned_data.get('phone_number')
         if phone_number:
             phone_number = phone_number.strip()
+            if not phone_number:
+                return None
             if User.objects.filter(phone_number=phone_number).exists():
                 raise forms.ValidationError("A user with this phone number already exists.")
-        return phone_number
+            return phone_number
+        return None
 
     def clean(self):
         cleaned_data = super().clean()
@@ -89,12 +92,15 @@ class UserEditForm(forms.ModelForm):
         phone_number = self.cleaned_data.get('phone_number')
         if phone_number:
             phone_number = phone_number.strip()
+            if not phone_number:
+                return None
             qs = User.objects.filter(phone_number=phone_number)
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
                 raise forms.ValidationError("A user with this phone number already exists.")
-        return phone_number
+            return phone_number
+        return None
 
 
 class PasswordResetAdminForm(forms.Form):
@@ -134,9 +140,12 @@ class RetailerOnboardingForm(forms.Form):
         phone_number = self.cleaned_data.get('phone_number')
         if phone_number:
             phone_number = phone_number.strip()
+            if not phone_number:
+                return None
             if User.objects.filter(phone_number=phone_number).exists():
                 raise forms.ValidationError("A user with this phone number already exists.")
-        return phone_number
+            return phone_number
+        return None
 
 
 class ItemForm(forms.ModelForm):

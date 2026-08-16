@@ -67,7 +67,7 @@
                         {% if b.status == 'approved' %}
                             <span class="badge bg-success px-3 py-1"><i class="bi bi-check-circle me-1"></i>Approved</span>
                         {% elif b.status == 'paid' %}
-                            <span class="badge bg-primary px-3 py-1"><i class="bi bi-cash-stack me-1"></i>Paid</span>
+                            <span class="badge bg-primary px-3 py-1"><i class="bi bi-cash-stack me-1"></i>Closed / Paid</span>
                         {% elif b.status == 'rejected' %}
                             <span class="badge bg-danger px-3 py-1"><i class="bi bi-x-circle me-1"></i>Rejected</span>
                         {% else %}
@@ -77,7 +77,12 @@
                     <td class="small text-muted">{% if b.created_by %}{{ b.created_by.display_name }}{% else %}System{% endif %}</td>
                     <td class="small text-muted">{{ b.created_at|date:"M d, Y H:i" }}</td>
                     <td>
-                        <a href="{% url 'bill_detail' b.pk %}" class="btn btn-sm btn-outline-primary py-1 px-2"><i class="bi bi-eye me-1"></i> View Invoice</a>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'bill_detail' b.pk %}" class="btn btn-outline-primary py-1 px-2"><i class="bi bi-eye me-1"></i> View</a>
+                            {% if user.is_superuser_role or user.is_owner_role %}
+                            <a href="{% url 'bill_edit' b.pk %}" class="btn btn-outline-warning py-1 px-2" title="Edit Bill Details"><i class="bi bi-pencil"></i> Edit</a>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
